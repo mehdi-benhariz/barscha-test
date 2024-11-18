@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    container_name: testdb
+    environment:
+      POSTGRES_USER: mehdi
+      POSTGRES_PASSWORD: randompassword
+      POSTGRES_DB: testdb
+    ports:
+      - '5432:5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
