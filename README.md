@@ -1,6 +1,6 @@
 # Barscha Test
 
-A project designed to demonstrate best practices in NestJS and Prisma integration, with API documentation and Docker support for seamless deployment.
+A project designed to demonstrate best practices in NestJS and Prisma integration, with API documentation and Docker support for seamless deployment. Was done as part of a Technical Test for Barscha.
 
 ## Table of Contents
 
@@ -37,9 +37,15 @@ A project designed to demonstrate best practices in NestJS and Prisma integratio
      DATABASE_URL=postgresql://user:password@localhost:5432/database
      ```
 
-4. Run Prisma migrations to set up the database schema:
+4. Run the docker container for the database:
+
    ```bash
-   npx prisma migrate dev
+   docker-compose up -d
+   ```
+
+5. Run Prisma migrations to set up the database schema:
+   ```bash
+   npm run migrate
    ```
 
 ---
@@ -75,28 +81,7 @@ A project designed to demonstrate best practices in NestJS and Prisma integratio
 The API is documented using **Swagger**.
 
 1. Start the project (locally or with Docker).
-2. Navigate to `http://localhost:3000/api` to view the Swagger UI.
-
-### Sample Endpoints
-
-- **GET /items**  
-  Fetch a list of all items.
-
-- **POST /items**  
-  Create a new item.  
-  **Body**:
-
-  ```json
-  {
-    "name": "Item Name",
-    "description": "Item Description"
-  }
-  ```
-
-- **GET /items/:id**  
-  Fetch details of an item by ID.
-
----
+2. Navigate to `http://localhost:3000/api-docs` to view the Swagger UI.
 
 ## Contributing
 

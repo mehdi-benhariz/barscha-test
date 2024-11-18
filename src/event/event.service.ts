@@ -37,17 +37,23 @@ export class EventService {
   }
 
   async delete(eventId: string) {
-    const transaction = await this.PrismaService.$transaction(async (tx) => {
-      await tx.rSVP.deleteMany({
-        where: { eventId: eventId },
+    try {
+      const transaction = await this.PrismaService.$transaction(async (tx) => {
+        await tx.rSVP.deleteMany({
+          where: { eventId: eventId },
+        });
+
+        await tx.event.delete({
+          where: { id: eventId },
+        });
       });
 
-      await tx.event.delete({
-        where: { id: eventId },
-      });
-    });
-
-    return transaction;
+      return transaction;
+    } catch (error) {
+      if (error.code === 'P2025')
+        throw new NotFoundException('Event not found');
+      throw new BadRequestException('Failed to delete event');
+    }
   }
   async findOne(eventId: string) {
     return this.PrismaService.event.findUnique({
