@@ -1,3 +1,4 @@
+import { GetEventsDto } from './dto/get-events.dto';
 import {
   BadRequestException,
   ConflictException,
@@ -14,14 +15,37 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class EventService {
-  constructor(private readonly PrismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
-  async findAll() {
-    return await this.PrismaService.event.findMany();
+  async findAll(getEventsDto: GetEventsDto) {
+    const { currentPage = 0, sizePerPage = 10 } = getEventsDto;
+
+    const isPagination = currentPage !== undefined && sizePerPage !== undefined;
+    const take = isPagination ? sizePerPage : undefined;
+    const skip = isPagination ? (currentPage || 0) * sizePerPage : undefined;
+
+    const [events, totalItems] = await this.prismaService.$transaction(
+      async (tx) => {
+        const events = await tx.event.findMany({
+          take,
+          skip,
+        });
+        let count;
+        if (isPagination)
+          count = await tx.event.aggregate({
+            _count: {
+              _all: true,
+            },
+          });
+        return [events, count];
+      },
+    );
+
+    return { data: events, totalItems: totalItems?._count?._all };
   }
 
   async create(userId: string, createEventDto: CreateEventDto) {
-    return this.PrismaService.event.create({
+    return this.prismaService.event.create({
       data: {
         ...createEventDto,
         creatorId: userId,
@@ -30,7 +54,7 @@ export class EventService {
   }
 
   async update(eventId: string, updateEventDto: UpdateEventDto) {
-    return this.PrismaService.event.update({
+    return this.prismaService.event.update({
       where: { id: eventId },
       data: updateEventDto,
     });
@@ -38,7 +62,7 @@ export class EventService {
 
   async delete(eventId: string) {
     try {
-      const transaction = await this.PrismaService.$transaction(async (tx) => {
+      const transaction = await this.prismaService.$transaction(async (tx) => {
         await tx.rSVP.deleteMany({
           where: { eventId: eventId },
         });
@@ -56,7 +80,7 @@ export class EventService {
     }
   }
   async findOne(eventId: string) {
-    return this.PrismaService.event.findUnique({
+    return this.prismaService.event.findUnique({
       where: { id: eventId },
       include: {
         rsvps: true,
@@ -67,7 +91,7 @@ export class EventService {
 
   async rsvpToEvent(userId: string, eventId: string, rsvpDto: RsvpDto) {
     try {
-      return await this.PrismaService.$transaction(
+      return await this.prismaService.$transaction(
         async (tx) => {
           const event = await tx.event.findUnique({
             where: { id: eventId },

@@ -22,7 +22,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     try {
       const request = context.switchToHttp().getRequest();
       const accessToken = request.headers['authorization']?.split(' ')[1];
-      console.log(accessToken);
+
       if (!accessToken)
         throw new UnauthorizedException('Access token not found');
 

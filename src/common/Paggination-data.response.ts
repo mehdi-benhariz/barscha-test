@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
+import { GetEventResponse } from 'src/event/response/get-event.response';
 
 interface IPaginatedType<T> {
   data: T[];
@@ -20,3 +21,7 @@ export function PaginationDataResponse<T>(ResourceClass) {
   }
   return Pagination;
 }
+
+export class PaginationEvents extends PaginationDataResponse<GetEventResponse>(
+  GetEventResponse,
+) {}
