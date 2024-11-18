@@ -37,11 +37,18 @@ export class EventService {
   }
 
   async delete(eventId: string) {
-    return this.PrismaService.event.delete({
-      where: { id: eventId },
-    });
-  }
+    const transaction = await this.PrismaService.$transaction(async (tx) => {
+      await tx.rSVP.deleteMany({
+        where: { eventId: eventId },
+      });
 
+      await tx.event.delete({
+        where: { id: eventId },
+      });
+    });
+
+    return transaction;
+  }
   async findOne(eventId: string) {
     return this.PrismaService.event.findUnique({
       where: { id: eventId },
