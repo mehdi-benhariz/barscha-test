@@ -1,3 +1,4 @@
+import { UpdateUserDto } from './dto/update-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import {
   BadRequestException,
@@ -73,7 +74,7 @@ export class UserService {
     return await this.prismaService.user.findMany();
   }
 
-  async delete(id: string) {
+  async remove(id: string) {
     try {
       return await this.prismaService.user.delete({
         where: { id },
@@ -84,11 +85,13 @@ export class UserService {
     }
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, updateUserDto: UpdateUserDto) {
     try {
       return await this.prismaService.user.update({
         where: { id },
-        data,
+        data: {
+          ...updateUserDto,
+        },
       });
     } catch (error) {
       if (error.code === 'P2025') throw new NotFoundException('User not found');

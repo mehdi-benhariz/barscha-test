@@ -1,17 +1,14 @@
-import { GetEventsDto } from './dto/get-events.dto';
 import {
   BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateEventDto } from './dto/create-event.dto';
-import { UpdateEventDto } from './dto/update-event.dto';
 import { PrismaService } from 'src/common/services/prisma.service';
-import { UserPaylodad } from 'src/user/user-payload';
+import { CreateEventDto } from './dto/create-event.dto';
+import { GetEventsDto } from './dto/get-events.dto';
 import { RsvpDto } from './dto/Rsvp.dto';
-import { NotFoundError } from 'rxjs';
-import { Prisma } from '@prisma/client';
+import { UpdateEventDto } from './dto/update-event.dto';
 
 @Injectable()
 export class EventService {
@@ -45,7 +42,7 @@ export class EventService {
   }
 
   async create(userId: string, createEventDto: CreateEventDto) {
-    return this.prismaService.event.create({
+    return await this.prismaService.event.create({
       data: {
         ...createEventDto,
         creatorId: userId,
@@ -54,9 +51,29 @@ export class EventService {
   }
 
   async update(eventId: string, updateEventDto: UpdateEventDto) {
-    return this.prismaService.event.update({
-      where: { id: eventId },
-      data: updateEventDto,
+    return await this.prismaService.$transaction(async (prisma) => {
+      const event = await prisma.event.findFirst({
+        where: { id: eventId },
+        select: {
+          maxCapacity: true,
+          rsvps: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+      });
+      // In case reducing maxCapacity, check if the event has reached the new maxCapacity
+      if (updateEventDto.maxCapacity) {
+        const bookedRsvps = event.rsvps.length || 0;
+        if (bookedRsvps > updateEventDto.maxCapacity)
+          throw new ConflictException('Event has reached maximum capacity');
+      }
+
+      return await prisma.event.update({
+        where: { id: eventId },
+        data: updateEventDto,
+      });
     });
   }
 
@@ -116,9 +133,8 @@ export class EventService {
             throw new ConflictException('RSVP already exists');
 
           if (rsvpDto.status === 'ATTENDING')
-            if (event.rsvps.length >= event.maxCapacity) {
+            if (event.rsvps.length >= event.maxCapacity)
               throw new ConflictException('Event has reached maximum capacity');
-            }
 
           const rsvp = await tx.rSVP.create({
             data: {
