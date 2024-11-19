@@ -17,6 +17,7 @@ import * as docs from './swagger-docs';
 import { UserPaylodad } from './user-payload';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { RoleEnum } from './role.enum';
 @ApiTags('User')
 @Controller('user')
 export class UserController {
@@ -40,22 +41,29 @@ export class UserController {
   }
 
   // Manage users - Client
-
+  @JwtAuth([RoleEnum.ADMIN])
+  @ResponseDoc(docs.GET_ALL_USERS_RESPONSE)
   @Get()
   findAll() {
     return this.userService.findAll();
   }
 
+  @JwtAuth([RoleEnum.ADMIN])
+  @ResponseDoc(docs.GET_USER_RESPONSE)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userService.findById(id);
   }
 
+  @JwtAuth([RoleEnum.ADMIN])
+  @ResponseDoc(docs.UPDATE_USER_RESPONSE)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(id, updateUserDto);
   }
 
+  @JwtAuth([RoleEnum.ADMIN])
+  @ResponseDoc(docs.DELETE_USER_RESPONSE)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.userService.remove(id);
